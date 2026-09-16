@@ -46,11 +46,13 @@ button, input, select { font: inherit; color: inherit; }
   position: relative;
   height: 100dvh;
   overflow: hidden;
+  overflow: clip;   /* hidden은 코드(포커스·scrollIntoView)로는 스크롤돼서 화면이 밀린다 */
 }
 
 #map {
   position: absolute;
   inset: 0;
+  z-index: 0;   /* Leaflet 컨트롤(z-index 1000)이 시트 위로 튀어나오지 않게 가둔다 */
   background: var(--surface-2);
 }
 

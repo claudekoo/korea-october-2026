@@ -311,80 +311,164 @@ function setActive(id, { from }) {
   const marker = markersById.get(id);
   if (!place || !marker) return;
 
+  markersById.forEach((otherMarker, otherId) => {
+    const pin = otherMarker.getElement()?.querySelector('.pin');
+    if (pin) pin.classList.toggle('is-active', otherId === id);
+  });
+
   if (from === 'list') {
     if (isMobile()) setSnap('peek');
     map.setView([place.lat, place.lng], Math.max(map.getZoom(), 15), { animate: true });
     marker.openPopup();
   } else {
-    if (isMobile()) setSnap('half');
-    const card = document.querySelector(`.card[data-id="${CSS.escape(id)}"]`);
-    if (card) card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (isMobile()) {
+      setSnap('half');
+      keepMarkerAboveSheet(place);
+    }
+    scrollCardIntoList(id);
   }
+}
+
+/* scrollIntoView는 .app까지 같이 스크롤해서 화면 전체가 밀린다. 목록만 직접 스크롤한다. */
+function scrollCardIntoList(id) {
+  const list = $('list');
+  const card = list.querySelector(`.card[data-id="${CSS.escape(id)}"]`);
+  if (!card) return;
+  list.scrollTo({ top: card.offsetTop - list.offsetTop - 8, behavior: 'smooth' });
+}
+
+/* 핀을 누르면 시트가 올라와 그 핀을 덮을 수 있다. 덮이면 시트 위 보이는 영역 가운데로 지도를 민다. */
+function keepMarkerAboveSheet(place) {
+  const pinY = map.latLngToContainerPoint([place.lat, place.lng]).y;
+  const sheetTop = snapY(snapPoint);
+  if (pinY < sheetTop - 60) return;
+  map.panBy([0, pinY - sheetTop / 2]);
 }
 
 /* ---- 바텀 시트 -------------------------------------------------------- */
 
-const SNAP_RATIO = { full: 0.08, half: 0.45, peek: 0.74 };
 let snapPoint = 'half';
+let sheetDragging = false;
 
+/* 시트 윗변의 y 위치(px). peek은 헤더만 남기고 지도를 최대한 보여준다. */
 function snapY(point) {
-  return window.innerHeight * SNAP_RATIO[point];
+  if (point === 'full') return window.innerHeight * 0.08;
+  if (point === 'half') return window.innerHeight * 0.45;
+  return window.innerHeight - $('panelGrip').offsetHeight - 20;
 }
 
 function setSnap(point) {
   snapPoint = point;
   const panel = $('panel');
+  const list = $('list');
   panel.dataset.snap = point;
-  panel.style.transform = isMobile() ? `translateY(${snapY(point)}px)` : '';
+
+  if (!isMobile()) {
+    panel.style.transform = '';
+    list.style.paddingBottom = '';
+    return;
+  }
+  const y = snapY(point);
+  panel.style.transform = `translateY(${y}px)`;
+  // 시트가 화면 아래로 y만큼 밀려나 있으니, 마지막 카드까지 스크롤되게 그만큼 여백을 준다.
+  list.style.paddingBottom = `${y + 24}px`;
+}
+
+/* 끌어서 놓으면 끈 방향에 있는 가장 가까운 멈춤 지점으로 간다. 조금만 끌어도 방향대로 움직인다. */
+function snapAfterDrag(releaseY, moved) {
+  const topToBottom = ['full', 'half', 'peek'];
+  if (moved > 0) return topToBottom.find((point) => snapY(point) >= releaseY) || 'peek';
+  return [...topToBottom].reverse().find((point) => snapY(point) <= releaseY) || 'full';
 }
 
 function initSheet() {
   const panel = $('panel');
   const grip = $('panelGrip');
+  const list = $('list');
   setSnap('half');
 
-  let dragging = false;
   let startY = 0;
   let startTranslate = 0;
   let moved = 0;
 
-  grip.addEventListener('pointerdown', (event) => {
-    if (!isMobile()) return;
-    if (event.target.closest('button')) return;   // 필터 버튼 등은 그냥 눌리게 둔다
-    dragging = true;
+  function clampY(y) {
+    return Math.min(Math.max(y, snapY('full')), snapY('peek'));
+  }
+
+  function beginDrag(clientY) {
+    sheetDragging = true;
     moved = 0;
-    startY = event.clientY;
-    startTranslate = snapY(snapPoint);
+    startY = clientY;
+    // 애니메이션 도중에 잡아도 튀지 않게, 지금 화면에 보이는 위치에서 시작한다.
+    startTranslate = new DOMMatrixReadOnly(getComputedStyle(panel).transform).m42;
     panel.classList.add('dragging');
-    grip.setPointerCapture(event.pointerId);
-  });
+    panel.style.transform = `translateY(${startTranslate}px)`;
+  }
 
-  grip.addEventListener('pointermove', (event) => {
-    if (!dragging) return;
-    moved = event.clientY - startY;
-    const y = Math.min(Math.max(startTranslate + moved, snapY('full')), snapY('peek'));
-    panel.style.transform = `translateY(${y}px)`;
-  });
+  function moveDrag(clientY) {
+    moved = clientY - startY;
+    panel.style.transform = `translateY(${clampY(startTranslate + moved)}px)`;
+  }
 
-  const endDrag = () => {
-    if (!dragging) return;
-    dragging = false;
+  function endDrag(allowTap) {
+    sheetDragging = false;
     panel.classList.remove('dragging');
 
     if (Math.abs(moved) < 6) {
-      // 탭: peek → half → full → peek 순환
-      const order = ['peek', 'half', 'full'];
-      setSnap(order[(order.indexOf(snapPoint) + 1) % order.length]);
+      if (!allowTap) { setSnap(snapPoint); return; }
+      // 탭: 반쯤 열려 있으면 내리고, 끝까지 내려가 있거나 올라가 있으면 반으로.
+      if (snapPoint === 'half') setSnap('peek');
+      else setSnap('half');
       return;
     }
-    const current = startTranslate + moved;
-    const nearest = Object.keys(SNAP_RATIO)
-      .sort((a, b) => Math.abs(snapY(a) - current) - Math.abs(snapY(b) - current))[0];
-    setSnap(nearest);
-  };
+    setSnap(snapAfterDrag(clampY(startTranslate + moved), moved));
+  }
 
-  grip.addEventListener('pointerup', endDrag);
-  grip.addEventListener('pointercancel', endDrag);
+  grip.addEventListener('pointerdown', (event) => {
+    if (!isMobile()) return;
+    if (event.target.closest('button')) return;   // 필터 버튼은 그냥 눌리게 둔다
+    beginDrag(event.clientY);
+    grip.setPointerCapture(event.pointerId);
+  });
+  grip.addEventListener('pointermove', (event) => {
+    if (sheetDragging) moveDrag(event.clientY);
+  });
+  grip.addEventListener('pointerup', () => {
+    if (sheetDragging) endDrag(true);
+  });
+  grip.addEventListener('pointercancel', () => {
+    if (sheetDragging) endDrag(false);
+  });
+
+  // 목록이 맨 위까지 올라가 있을 때 아래로 끌면, 스크롤 대신 시트를 내린다.
+  let listTouchStartY = null;
+
+  list.addEventListener('touchstart', (event) => {
+    const atTop = list.scrollTop <= 0;
+    listTouchStartY = isMobile() && atTop && event.touches.length === 1 ? event.touches[0].clientY : null;
+  }, { passive: true });
+
+  list.addEventListener('touchmove', (event) => {
+    if (listTouchStartY === null) return;
+    const y = event.touches[0].clientY;
+    const pulledDown = y - listTouchStartY;
+
+    if (!sheetDragging) {
+      if (pulledDown < 0) { listTouchStartY = null; return; }   // 위로 밀면 평소처럼 스크롤
+      event.preventDefault();
+      if (pulledDown < 8) return;
+      beginDrag(listTouchStartY);
+    }
+    event.preventDefault();
+    moveDrag(y);
+  }, { passive: false });
+
+  const endListTouch = () => {
+    listTouchStartY = null;
+    if (sheetDragging) endDrag(false);
+  };
+  list.addEventListener('touchend', endListTouch);
+  list.addEventListener('touchcancel', endListTouch);
 }
 
 /* ---- 지도 ------------------------------------------------------------ */
@@ -409,11 +493,22 @@ function initMap() {
     fitToVisible();
   }).observe(map.getContainer());
 
+  placeAttribution();
+
   map.on('click', (event) => {
-    if (!pickingCenter) return;
-    setCenter([event.latlng.lat, event.latlng.lng], '지도에서 고른 지점');
-    stopPicking();
+    if (pickingCenter) {
+      setCenter([event.latlng.lat, event.latlng.lng], '지도에서 고른 지점');
+      stopPicking();
+      return;
+    }
+    // 모바일에서 빈 지도를 누르면 시트를 내려 지도를 넓게 보여준다.
+    if (isMobile()) setSnap('peek');
   });
+}
+
+/* 모바일에서는 오른쪽 아래가 시트에 가려지니 출처 표시를 왼쪽 위로 옮긴다. */
+function placeAttribution() {
+  map.attributionControl.setPosition(isMobile() ? 'topleft' : 'bottomright');
 }
 
 function drawCenter() {
@@ -603,7 +698,9 @@ function bindFilterEvents() {
   });
 
   window.addEventListener('resize', () => {
-    setSnap(snapPoint);
+    // 모바일 주소창이 접히며 생기는 resize가 끄는 도중의 시트를 되돌리지 않게 한다.
+    if (!sheetDragging) setSnap(snapPoint);
+    placeAttribution();
     map.invalidateSize();
   });
 }
