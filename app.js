@@ -130,7 +130,7 @@ function mapLinks(place) {
   const query = `${place.lat},${place.lng}`;
   const name = encodeURIComponent(place.name);
   return [
-    place.instagram && { href: place.instagram, label: '인스타', cls: 'ig' },
+    place.instagram && { href: place.instagram, label: '인스타 게시물', cls: 'ig' },
     { href: `https://www.google.com/maps/search/?api=1&query=${query}`, label: '구글맵', cls: '' },
     { href: `https://map.naver.com/p/search/${name}`, label: '네이버', cls: '' },
     { href: `https://map.kakao.com/link/to/${name},${place.lat},${place.lng}`, label: '카카오', cls: '' }
