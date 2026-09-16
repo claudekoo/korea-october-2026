@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>한국 2026년 10월 — 가볼 곳</title>
+<meta name="description" content="인스타에서 모은 서울·한국 팝업, 카페, 음식점, 놀거리 목록과 지도.">
+<meta name="theme-color" content="#1b1b1f">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app">
+
+  <div id="map" role="application" aria-label="장소 지도"></div>
+
+  <p id="pickHint" class="pick-hint" hidden>지도에서 기준점을 탭하세요 <button type="button" id="pickCancel">취소</button></p>
+
+  <section class="panel" id="panel" data-snap="half" aria-label="장소 목록">
+    <div class="panel-grip" id="panelGrip">
+      <span class="grip-bar" aria-hidden="true"></span>
+      <div class="panel-head">
+        <p class="count" id="count">불러오는 중…</p>
+        <button type="button" class="btn btn-filter" id="openFilters">
+          필터<span class="badge" id="filterBadge" hidden>0</span>
+        </button>
+      </div>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
+
+  <aside class="filters" id="filters" aria-label="필터">
+    <div class="filters-head">
+      <h2>필터</h2>
+      <button type="button" class="icon-btn" id="closeFilters" aria-label="필터 닫기">✕</button>
+    </div>
+
+    <div class="filters-body">
+      <fieldset class="group">
+        <legend>종류</legend>
+        <div class="chips" id="typeChips"></div>
+      </fieldset>
+
+      <fieldset class="group">
+        <legend>날짜</legend>
+        <div class="dates">
+          <label>시작<input type="date" id="startDate"></label>
+          <label>종료<input type="date" id="endDate"></label>
+        </div>
+        <div class="chips">
+          <button type="button" class="chip" id="presetTrip">여행 기간 전체</button>
+          <button type="button" class="chip" id="presetToday">오늘</button>
+        </div>
+      </fieldset>
+
+      <fieldset class="group">
+        <legend>도시</legend>
+        <div class="chips" id="cityChips"></div>
+      </fieldset>
+
+      <fieldset class="group">
+        <legend>거리</legend>
+        <label class="switch">
+          <input type="checkbox" id="radiusToggle">
+          <span>기준점에서 반경으로 거르기</span>
+        </label>
+        <div class="radius-body" id="radiusBody" hidden>
+          <div class="chips">
+            <button type="button" class="chip" id="useMyLocation">내 위치</button>
+            <button type="button" class="chip" id="pickOnMap">지도에서 선택</button>
+          </div>
+          <label class="radius-range">반경 <output id="radiusOut">2km</output>
+            <input type="range" id="radiusRange" min="0" max="5" step="1" value="2">
+          </label>
+          <p class="hint" id="centerLabel">기준점이 아직 없어요.</p>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="filters-foot">
+      <button type="button" class="btn btn-ghost" id="resetFilters">초기화</button>
+      <button type="button" class="btn btn-primary" id="applyFilters">결과 보기</button>
+    </div>
+  </aside>
+
+  <div class="scrim" id="scrim" hidden></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="app.js"></script>
+</body>
+</html>
