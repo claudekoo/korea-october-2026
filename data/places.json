@@ -952,5 +952,24 @@
     "price": "요트투어 약 20,000원~",
     "image": "images/Cpu11kSOXhh.jpg",
     "instagram": "https://www.instagram.com/p/Cpu11kSOXhh/"
+  },
+  {
+    "id": "dongmyo-watch-street",
+    "name": "동묘 시계골목",
+    "nameEn": "Dongmyo Vintage Watch Street",
+    "type": "entertainment",
+    "description": "동묘 일대의 빈티지 시계 상점가. 특가 세일 정보 등 구체적인 매장 위치는 게시물 댓글로만 안내돼 본문에는 없다.",
+    "city": "서울",
+    "area": "동묘",
+    "address": null,
+    "lat": null,
+    "lng": null,
+    "startDate": null,
+    "endDate": null,
+    "hours": null,
+    "hoursNote": null,
+    "price": null,
+    "image": "images/DdWG8Iwidhe.jpg",
+    "instagram": "https://www.instagram.com/p/DdWG8Iwidhe/"
   }
 ]
