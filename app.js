@@ -70,6 +70,11 @@ function formatDistance(km) {
   return km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`;
 }
 
+/* 게시물에 주소가 없던 곳은 좌표가 비어 있다. 목록에는 나오지만 지도에는 못 찍는다. */
+function hasCoords(place) {
+  return typeof place.lat === 'number' && typeof place.lng === 'number';
+}
+
 /* ---- 오늘 상태 -------------------------------------------------------- */
 
 function todayStatus(place, now = new Date()) {
@@ -110,6 +115,7 @@ function matchesFilters(place) {
   if (filters.cities.length && !filters.cities.includes(place.city)) return false;
   if (!overlapsDateRange(place)) return false;
   if (filters.useRadius && filters.center) {
+    if (!hasCoords(place)) return false;
     if (haversineKm(filters.center, [place.lat, place.lng]) > filters.radiusKm) return false;
   }
   return true;
@@ -127,13 +133,18 @@ function activeFilterCount() {
 /* ---- 카드 ------------------------------------------------------------ */
 
 function mapLinks(place) {
-  const query = `${place.lat},${place.lng}`;
   const name = encodeURIComponent(place.name);
   return [
     place.instagram && { href: place.instagram, label: '인스타 게시물', cls: 'ig' },
-    { href: `https://www.google.com/maps/search/?api=1&query=${query}`, label: '구글맵', cls: '' },
+    hasCoords(place) && {
+      href: `https://www.google.com/maps/search/?api=1&query=${place.lat},${place.lng}`,
+      label: '구글맵', cls: ''
+    },
     { href: `https://map.naver.com/p/search/${name}`, label: '네이버', cls: '' },
-    { href: `https://map.kakao.com/link/to/${name},${place.lat},${place.lng}`, label: '카카오', cls: '' }
+    hasCoords(place) && {
+      href: `https://map.kakao.com/link/to/${name},${place.lat},${place.lng}`,
+      label: '카카오', cls: ''
+    }
   ].filter(Boolean);
 }
 
@@ -157,7 +168,7 @@ function cardHtml(place) {
   const where = [place.city, place.area].filter(Boolean).join(' · ');
   const meta = [
     `<li><b>기간</b>${escapeHtml(formatDateRange(place))}</li>`,
-    `<li><b>위치</b>${escapeHtml(place.address || where)}</li>`,
+    `<li><b>위치</b>${escapeHtml(place.address || where)}${hasCoords(place) ? '' : ' <span class="muted">(지도 표시 안 됨)</span>'}</li>`,
     place.price ? `<li><b>가격</b>${escapeHtml(place.price)}</li>` : '',
     place.distanceKm != null ? `<li><b>거리</b>${formatDistance(place.distanceKm)}</li>` : ''
   ].join('');
@@ -203,7 +214,7 @@ function renderMarkers() {
   markerLayer.clearLayers();
   markersById.clear();
 
-  visible.forEach((place) => {
+  visible.filter(hasCoords).forEach((place) => {
     const marker = L.marker([place.lat, place.lng], {
       icon: L.divIcon({
         className: '',
@@ -252,9 +263,9 @@ function fitToVisible() {
     map.fitBounds(radiusCircle.getBounds(), fitOptions(16));
     return;
   }
-  if (!visible.length) return;
-  const bounds = L.latLngBounds(visible.map((p) => [p.lat, p.lng]));
-  map.fitBounds(bounds, fitOptions(15));
+  const onMap = visible.filter(hasCoords);
+  if (!onMap.length) return;
+  map.fitBounds(L.latLngBounds(onMap.map((p) => [p.lat, p.lng])), fitOptions(15));
 }
 
 function applyFilters({ refit = true } = {}) {
