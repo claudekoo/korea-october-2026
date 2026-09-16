@@ -221,6 +221,24 @@ button, input, select { font: inherit; color: inherit; }
   overflow: hidden;
 }
 
+.card .desc.expanded {
+  display: block;
+  -webkit-line-clamp: none;
+  overflow: visible;
+}
+
+.more {
+  margin-top: 2px;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--ink-faint);
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.more:hover { color: var(--ink-soft); }
+
 .meta {
   margin: 8px 0 0;
   padding: 0;

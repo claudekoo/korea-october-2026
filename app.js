@@ -208,6 +208,19 @@ function renderList() {
     return;
   }
   list.innerHTML = visible.map(cardHtml).join('');
+  addMoreButtons();
+}
+
+/* 설명이 2줄을 넘길 때만 더보기 버튼을 붙인다. 짧은 설명에는 버튼이 없다. */
+function addMoreButtons() {
+  $('list').querySelectorAll('.desc').forEach((desc) => {
+    if (desc.scrollHeight - desc.clientHeight < 2) return;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'more';
+    button.textContent = '더보기';
+    desc.after(button);
+  });
 }
 
 function renderMarkers() {
@@ -506,8 +519,18 @@ function bindFilterEvents() {
 
     if (event.target.closest('[data-reset]')) { resetFilters(); return; }
 
+    const more = event.target.closest('.more');
+    if (more) {
+      const desc = more.previousElementSibling;
+      const expanded = desc.classList.toggle('expanded');
+      more.textContent = expanded ? '접기' : '더보기';
+      return;
+    }
+
     const card = event.target.closest('.card');
-    if (card && !event.target.closest('a')) setActive(card.dataset.id, { from: 'list' });
+    if (card && !event.target.closest('a, button, summary')) {
+      setActive(card.dataset.id, { from: 'list' });
+    }
   });
 
   $('list').addEventListener('keydown', (event) => {
