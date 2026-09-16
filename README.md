@@ -20,8 +20,9 @@ index.html          마크업
 styles.css          스타일 (모바일 우선)
 app.js              로직 전부
 data/places.json    장소 데이터 — 평소에 고치는 건 여기뿐
-images/             썸네일 (선택)
+images/             게시물 썸네일 (파일명 = 인스타 shortcode)
 CONTENT_GUIDE.md    인스타 링크로 데이터 채우는 규칙
+CLAUDE.md           Claude가 링크만 보고도 알아서 움직이게 하는 트리거
 ```
 
 ## 로컬에서 보기
@@ -36,10 +37,11 @@ python -m http.server 8000
 
 ## 장소 추가
 
-Claude에게 인스타 링크를 던지면 된다:
+Claude에게 인스타 링크만 던지면 된다. "추가해줘"라고 안 해도 알아서 한다
+(`CLAUDE.md`가 트리거, `CONTENT_GUIDE.md`가 절차):
 
 ```
-이 링크들 추가해줘:
+https://www.instagram.com/p/...
 https://www.instagram.com/p/...
 ```
 
