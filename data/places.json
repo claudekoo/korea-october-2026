@@ -1204,5 +1204,32 @@
     "price": null,
     "image": "images/DcKsKeRx667.jpg",
     "instagram": "https://www.instagram.com/p/DcKsKeRx667/"
+  },
+  {
+    "id": "marie-et-ju-seomyeon",
+    "name": "마리앤쥬",
+    "nameEn": "Marie et Ju",
+    "type": "cafe",
+    "description": "부산 서면·전포동의 실내 동물카페. 부산 유일 아기 여우를 비롯해 강아지, 고양이, 염소, 포니, 토끼 등이 있다. 지하 1시간 무료 주차.",
+    "city": "부산",
+    "area": "전포동",
+    "address": "부산 부산진구 동천로 70, 3층",
+    "lat": 35.155,
+    "lng": 129.0626,
+    "startDate": null,
+    "endDate": null,
+    "hours": {
+      "mon": ["11:00", "21:00"],
+      "tue": ["11:00", "21:00"],
+      "wed": ["11:00", "21:00"],
+      "thu": ["11:00", "21:00"],
+      "fri": ["11:00", "21:00"],
+      "sat": ["11:00", "21:00"],
+      "sun": ["11:00", "21:00"]
+    },
+    "hoursNote": "예약 불가",
+    "price": "입장료 15,000원 (10% 적립)",
+    "image": "images/DX3YpjEzJ1c.jpg",
+    "instagram": "https://www.instagram.com/p/DX3YpjEzJ1c/"
   }
 ]
